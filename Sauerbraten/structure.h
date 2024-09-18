@@ -1,33 +1,28 @@
 #pragma once
 #include <geom.h>
 
-class LocalPlayer
+class PlayerEntity
 {
 public:
 	Vector3 Position; //0x0000
 	Vector3 Velocity; //0x000C
-	Vector3 Padding; //0x0018
-	char pad_0024[24]; //0x0024
-	Vector2 ViewAngle; //0x003C
-	char pad_0044[308]; //0x0044
+	Vector3 Falling; //0x0018
+	Vector3 DeltaPosition; //0x0024
+	Vector3 NewPosition; //0x0030
+	Vector3 ViewAngle; //0x003C
+	float MaxSpeed; //0x0048
+	uint32_t TimeInAir; //0x004C
+	char pad_0050[296]; //0x0050
 	uint32_t Health; //0x0178
-}; //Size: 0x017C
-
-class PlayerEntity
-{
-public:
-	char pad_0000[20]; //0x0000
-	char Name[16]; //0x0014
-	char pad_0024[244]; //0x0024
-	char Team[4]; //0x0118 
-	char pad_011C[548]; //0x011C
-	int32_t Health; //0x0340
-	char pad_0344[80]; //0x0344
-	Vector3 Position; //0x0394
-}; //Size: 0x03A0
+	char pad_017C[24]; //0x017C
+	int32_t WeaponAmmo[7]; //0x0194
+	char pad_01B0[192]; //0x01B0
+	int32_t Alive; //0x0270
+	char Name[16]; //0x0274
+}; //Size: 0x0284
 
 class EntityList
 {
 public:
-	PlayerEntity* players [21];
+	PlayerEntity* players [20];
 };

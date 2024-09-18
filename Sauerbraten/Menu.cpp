@@ -21,6 +21,7 @@ HDC gameHDC;
 WNDPROC originalWndProc;
 RECT rect;
 LPCSTR gameName = "Cube 2: Sauerbraten";
+byte originalNoMove[5] = {};
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -38,13 +39,51 @@ LRESULT CALLBACK newWNDProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return CallWindowProc(originalWndProc, hWnd, uMsg, wParam, lParam);
 }
 
+void patchMove()
+{
+	DWORD oldProtect;
+	VirtualProtect(NoMoveAddrTarget, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
+	memcpy(originalNoMove, NoMoveAddrTarget, 5);
+	memset(NoMoveAddrTarget, 0x90, 5);
+	VirtualProtect(NoMoveAddrTarget, 5, oldProtect, &oldProtect);
+}
+
+void UnPatchMove()
+{
+	DWORD oldProtect;
+	VirtualProtect(NoMoveAddrTarget, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
+	memcpy(NoMoveAddrTarget, originalNoMove, 5);
+	VirtualProtect(NoMoveAddrTarget, 5, oldProtect, &oldProtect);
+}
+
 void HackMenu()
 {
 	ImGui::BeginTabItem("Hack Menu");
 	ImGui::Checkbox("ESP", &Settings::esp);
+	ImGui::Checkbox("Aimbot", &Settings::aimbot);
 	ImGui::InputInt("Switch Weapons", &Settings::switchWeapons);
 	if (ImGui::Button("Apply"))
-		SelectWeapon(Settings::switchWeapons,localPlayer);
+	{
+		if (Settings::switchWeapons < 0)
+			Settings::switchWeapons = 0;
+		if (Settings::switchWeapons > 6)
+			Settings::switchWeapons = 6;
+
+		localPlayer->WeaponAmmo[Settings::switchWeapons] = 100;
+		SelectWeapon(Settings::switchWeapons, localPlayer);
+	}
+	ImGui::Checkbox("NoClip", &Settings::NoClip);
+	if (ImGui::Checkbox("NoMove", &Settings::noMove))
+	{
+		if (Settings::noMove)
+			patchMove();
+		else
+			UnPatchMove();
+	}
+	ImGui::InputFloat("Speed", &Settings::Speed);
+	if (ImGui::Button("KILL ALL"))
+		ESP::Kill();
+	ImGui::Checkbox("Silent", &Settings::slient);
 	ImGui::EndTabItem();
 }
 
@@ -140,7 +179,6 @@ void Menu::shutdown()
 	SetWindowLongPtr(FindWindowA(NULL, gameName), GWLP_WNDPROC, (LONG_PTR)originalWndProc);
 }
 
-
 BOOL __stdcall Menu::newSwapBuffers(HDC hdc)
 {
 	gameContext = wglGetCurrentContext();
@@ -151,6 +189,8 @@ BOOL __stdcall Menu::newSwapBuffers(HDC hdc)
 	Menu::startRender();
 	Menu::render();
 	ESP::esp();
+	ESP::noClip();
+	ESP::Aimbot();
 	Menu::endRender();
 
 	wglMakeCurrent(hdc, gameContext);

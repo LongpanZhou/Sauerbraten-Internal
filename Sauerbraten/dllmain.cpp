@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include "Menu.h"
+#include "ESP.h"
 #include <iostream>
 #include "constants.h"
 #include <MinHook.h>
@@ -8,6 +9,7 @@
 bool init_hook()
 {
     MH_CreateHook(originalSwapBuffers, &Menu::newSwapBuffers, reinterpret_cast<void**>(&end_originalSwapBuffers));
+    MH_CreateHook(originalShoot, &ESP::newShoot, reinterpret_cast<void**>(&end_originalShoot));
     return true;
 }
 
